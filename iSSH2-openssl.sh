@@ -57,6 +57,8 @@ do
     CONF="no-asm no-hw no-shared no-async"
   fi
 
+  echo "Building OpenSSL for $ARCH"
+
   PLATFORM="$(platformName "$SDK_PLATFORM" "$ARCH")"
   OPENSSLDIR="$LIBSSLDIR/${PLATFORM}_$SDK_VERSION-$ARCH"
   LIPO_LIBSSL="$LIPO_LIBSSL $OPENSSLDIR/libssl.a"
@@ -71,6 +73,8 @@ do
 
     LOG="$OPENSSLDIR/build-openssl.log"
     touch $LOG
+
+    echo "Logfile: $LOG"
 
     if [[ "$SDK_PLATFORM" == "macosx" ]]; then
       if [[ "$ARCH" == "x86_64" ]]; then
@@ -94,13 +98,20 @@ do
 
     CONF="$CONF -m$SDK_PLATFORM-version-min=$MIN_VERSION $EMBED_BITCODE"
 
+    echo "Configuring OpenSSL for $PLATFORM $ARCH..."
+
     ./Configure $HOST $CONF >> "$LOG" 2>&1
 
     if [[ "$ARCH" == "x86_64" ]]; then
       sed -ie "s!^CFLAG=!CFLAG=-isysroot $SDKROOT !" "Makefile"
     fi
 
+    echo "Making OpenSSL depend for $PLATFORM $ARCH..."
+
     make depend >> "$LOG" 2>&1
+
+    echo "Making OpenSSL libs for $PLATFORM $ARCH..."
+
     make -j "$BUILD_THREADS" build_libs >> "$LOG" 2>&1
 
     echo "- $PLATFORM $ARCH done!"
